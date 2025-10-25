@@ -1,0 +1,22 @@
+# Backend build outputs
+**/bin/
+**/obj/
+**/logs/
+
+# Frontend dependencies and build
+frontend/improve-my-city-frontend/node_modules/
+frontend/improve-my-city-frontend/build/
+frontend/improve-my-city-frontend/.env
+
+# Database files
+*.mdf
+*.ldf
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

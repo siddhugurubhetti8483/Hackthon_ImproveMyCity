@@ -1,0 +1,68 @@
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific files
+*.suo
+*.user
+*.userprefs
+
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# NuGet
+**/packages/
+*.nupkg
+.nuget/
+nuget.exe
+
+# Logs
+**/logs/
+*.log
+
+# Sensitive data
+appsettings.Development.json
+appsettings.Local.json
+appsettings.Secrets.json
+*.pfx
+*.p12
+
+# Database
+**/Migrations/
+*.mdf
+*.ldf
+ImproveMyCityDB.mdf
+
+# IDE
+.idea/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

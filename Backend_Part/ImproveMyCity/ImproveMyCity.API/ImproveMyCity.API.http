@@ -1,0 +1,6 @@
+@ImproveMyCity.API_HostAddress = http://localhost:5145
+
+GET {{ImproveMyCity.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
