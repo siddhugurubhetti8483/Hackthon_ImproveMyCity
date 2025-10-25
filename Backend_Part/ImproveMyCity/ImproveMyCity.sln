@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36221.1 d17.14
+VisualStudioVersion = 17.14.36221.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImproveMyCity.API", "ImproveMyCity.API\ImproveMyCity.API.csproj", "{BD6593EE-64DB-4B06-900E-E4F48652C32F}"
 EndProject
@@ -10,6 +10,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImproveMyCity.Infrastructure", "ImproveMyCity.Infrastructure\ImproveMyCity.Infrastructure.csproj", "{ED39A25C-5E6E-4116-841D-8F4BFB8906E3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImproveMyCity.Domain", "ImproveMyCity.Domain\ImproveMyCity.Domain.csproj", "{99EA1FDE-D4B9-41D7-8C5F-E2F0DE771A0F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

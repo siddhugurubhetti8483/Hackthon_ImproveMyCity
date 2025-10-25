@@ -11,19 +11,25 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check localStorage for saved theme
+    const savedTheme = localStorage.getItem("improve-my-city-theme");
+    return savedTheme ? savedTheme === "dark" : false;
+  });
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) {
-      setIsDarkMode(savedTheme === "dark");
-    }
-  }, []);
+    // Save theme to localStorage
+    localStorage.setItem(
+      "improve-my-city-theme",
+      isDarkMode ? "dark" : "light"
+    );
+
+    // Apply theme to document
+    document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
 
   const toggleTheme = () => {
-    const newTheme = !isDarkMode;
-    setIsDarkMode(newTheme);
-    localStorage.setItem("theme", newTheme ? "dark" : "light");
+    setIsDarkMode((prev) => !prev);
   };
 
   const value = {

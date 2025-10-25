@@ -16,8 +16,9 @@ import {
   AccountCircle,
   Brightness4,
   Brightness7,
-  Menu as MenuIcon,
   Analytics as AnalyticsIcon,
+  Person as PersonIcon,
+  ExitToApp as LogoutIcon,
 } from "@mui/icons-material";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -52,23 +53,36 @@ const Navbar = () => {
     handleClose();
   };
 
+  const handleDashboard = () => {
+    navigate("/dashboard");
+  };
+
   return (
     <AppBar position="static">
       <Toolbar>
         <Typography
           variant="h6"
           component="div"
-          sx={{ flexGrow: 1, cursor: "pointer" }}
-          onClick={() => navigate("/")}
+          sx={{
+            flexGrow: 1,
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+          onClick={handleDashboard}
         >
           Improve My City
         </Typography>
 
         {/* Theme Toggle */}
         <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
-          <Brightness7 />
-          <Switch checked={isDarkMode} onChange={toggleTheme} color="default" />
-          <Brightness4 />
+          <Brightness7 sx={{ fontSize: 20 }} />
+          <Switch
+            checked={isDarkMode}
+            onChange={toggleTheme}
+            color="default"
+            size="small"
+          />
+          <Brightness4 sx={{ fontSize: 20 }} />
         </Box>
 
         {user ? (
@@ -98,8 +112,17 @@ const Navbar = () => {
               open={Boolean(anchorEl)}
               onClose={handleClose}
             >
-              {/* Officer ke liye Analytics option */}
-              {user?.roles?.includes("Officer") && (
+              {/* Profile */}
+              <MenuItem onClick={handleProfile}>
+                <ListItemIcon>
+                  <PersonIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Profile" />
+              </MenuItem>
+
+              {/* Analytics for Officer and Admin */}
+              {(user?.roles?.includes("Officer") ||
+                user?.roles?.includes("Admin")) && (
                 <MenuItem onClick={handleAnalytics}>
                   <ListItemIcon>
                     <AnalyticsIcon fontSize="small" />
@@ -108,8 +131,13 @@ const Navbar = () => {
                 </MenuItem>
               )}
 
-              <MenuItem onClick={handleProfile}>Profile</MenuItem>
-              <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              {/* Logout */}
+              <MenuItem onClick={handleLogout}>
+                <ListItemIcon>
+                  <LogoutIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Logout" />
+              </MenuItem>
             </Menu>
           </div>
         ) : (
