@@ -37,7 +37,7 @@ const Analytics = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (user?.roles?.includes("Admin")) {
+    if (user?.roles?.includes("Admin") || user?.roles?.includes("Officer")) {
       fetchAnalytics();
     }
   }, [user]);
@@ -45,9 +45,14 @@ const Analytics = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
+      setError("");
+
+      // ONLY REAL API CALL - NO MOCK DATA
       const response = await analyticsService.getAnalytics();
       if (response.success) {
         setAnalytics(response.data);
+      } else {
+        setError(response.message || "Failed to load analytics");
       }
     } catch (error) {
       setError(error.message || "Failed to load analytics");
@@ -56,11 +61,11 @@ const Analytics = () => {
     }
   };
 
-  if (!user?.roles?.includes("Admin")) {
+  if (!user?.roles?.includes("Admin") && !user?.roles?.includes("Officer")) {
     return (
       <Container>
         <Alert severity="error">
-          Access denied. Admin privileges required.
+          Access denied. Admin or Officer privileges required.
         </Alert>
       </Container>
     );

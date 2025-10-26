@@ -26,7 +26,6 @@ import {
   CardContent,
 } from "@mui/material";
 import {
-  Edit as EditIcon,
   Block as BlockIcon,
   CheckCircle as CheckCircleIcon,
   People as PeopleIcon,
@@ -54,135 +53,88 @@ const UserManagement = () => {
     }
   }, [currentUser]);
 
+  // Fetch users from API
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError("");
 
-      // Mock data for demonstration
-      const mockUsers = [
-        {
-          userId: 1,
-          fullName: "System Administrator",
-          email: "admin@improvecity.com",
-          roles: ["Admin"],
-          isActive: true,
-          isMFAEnabled: true,
-          lastLoginDate: new Date().toISOString(),
-          createdAt: new Date("2024-01-01").toISOString(),
-        },
-        {
-          userId: 2,
-          fullName: "City Officer",
-          email: "officer@improvecity.com",
-          roles: ["Officer"],
-          isActive: true,
-          isMFAEnabled: false,
-          lastLoginDate: new Date(
-            Date.now() - 2 * 24 * 60 * 60 * 1000
-          ).toISOString(),
-          createdAt: new Date("2024-01-15").toISOString(),
-        },
-        {
-          userId: 3,
-          fullName: "John Citizen",
-          email: "john@example.com",
-          roles: ["User"],
-          isActive: true,
-          isMFAEnabled: true,
-          lastLoginDate: new Date(
-            Date.now() - 1 * 24 * 60 * 60 * 1000
-          ).toISOString(),
-          createdAt: new Date("2024-02-01").toISOString(),
-        },
-        {
-          userId: 4,
-          fullName: "Jane Doe",
-          email: "jane@example.com",
-          roles: ["User"],
-          isActive: false,
-          isMFAEnabled: false,
-          lastLoginDate: new Date("2024-01-20").toISOString(),
-          createdAt: new Date("2024-02-15").toISOString(),
-        },
-      ];
-
-      setUsers(mockUsers);
-
-      // Uncomment when backend is ready:
-      // const response = await userService.getUsers();
-      // if (response.success) {
-      //   setUsers(response.data);
-      // }
+      const response = await userService.getUsers();
+      if (response.success) {
+        setUsers(response.data);
+      } else {
+        setError(response.message || "Failed to load users");
+      }
     } catch (error) {
+      console.error("Fetch users error:", error);
       setError(error.message || "Failed to load users");
     } finally {
       setLoading(false);
     }
   };
 
+  // Open role change dialog
   const handleRoleChange = (user, newRole) => {
     setRoleDialog({ open: true, user, newRole });
   };
 
+  // Confirm role change via API
   const confirmRoleChange = async () => {
     try {
-      // Mock success - replace with actual API call
-      setUsers(
-        users.map((user) =>
-          user.userId === roleDialog.user.userId
-            ? { ...user, roles: [roleDialog.newRole] }
-            : user
-        )
+      // ACTUAL API CALL
+      const response = await userService.updateUserRole(
+        roleDialog.user.userId,
+        roleDialog.newRole
       );
-
-      setRoleDialog({ open: false, user: null, newRole: "" });
-
-      // Uncomment when backend is ready:
-      // const response = await userService.updateUserRole(roleDialog.user.userId, roleDialog.newRole);
-      // if (response.success) {
-      //   setUsers(users.map(user =>
-      //     user.userId === roleDialog.user.userId
-      //       ? { ...user, roles: [roleDialog.newRole] }
-      //       : user
-      //   ));
-      //   setRoleDialog({ open: false, user: null, newRole: '' });
-      // }
+      if (response.success) {
+        setUsers(
+          users.map((user) =>
+            user.userId === roleDialog.user.userId
+              ? { ...user, roles: [roleDialog.newRole] }
+              : user
+          )
+        );
+        setRoleDialog({ open: false, user: null, newRole: "" });
+      } else {
+        setError(response.message || "Failed to update user role");
+      }
     } catch (error) {
+      console.error("Update role error:", error);
       setError(error.message || "Failed to update user role");
     }
   };
 
+  // Toggle user active/inactive status via API
   const toggleUserStatus = async (userId, currentStatus) => {
     try {
-      // Mock success - replace with actual API call
-      setUsers(
-        users.map((user) =>
-          user.userId === userId ? { ...user, isActive: !currentStatus } : user
-        )
+      // ACTUAL API CALL
+      const response = await userService.updateUserStatus(
+        userId,
+        !currentStatus
       );
-
-      // Uncomment when backend is ready:
-      // const response = await userService.updateUserStatus(userId, !currentStatus);
-      // if (response.success) {
-      //   setUsers(users.map(user =>
-      //     user.userId === userId
-      //       ? { ...user, isActive: !currentStatus }
-      //       : user
-      //   ));
-      // }
+      if (response.success) {
+        setUsers(
+          users.map((user) =>
+            user.userId === userId
+              ? { ...user, isActive: !currentStatus }
+              : user
+          )
+        );
+      } else {
+        setError(response.message || "Failed to update user status");
+      }
     } catch (error) {
+      console.error("Toggle status error:", error);
       setError(error.message || "Failed to update user status");
     }
   };
 
-  // Filter users based on search and role filter
+  // Filter users based on search and role
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
-
     const matchesRole = roleFilter === "all" || user.roles.includes(roleFilter);
-
     return matchesSearch && matchesRole;
   });
 
@@ -196,6 +148,7 @@ const UserManagement = () => {
     mfaEnabled: users.filter((u) => u.isMFAEnabled).length,
   };
 
+  // Access control
   if (!currentUser?.roles?.includes("Admin")) {
     return (
       <Container>
@@ -417,21 +370,25 @@ const UserManagement = () => {
                 </TableCell>
               </TableRow>
             ))}
+
+            {filteredUsers.length === 0 && (
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Typography variant="h6" color="textSecondary">
+                  No users found
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                  sx={{ mt: 1 }}
+                >
+                  {searchTerm || roleFilter !== "all"
+                    ? "Try adjusting your search or filters"
+                    : "No users in the system"}
+                </Typography>
+              </Box>
+            )}
           </TableBody>
         </Table>
-
-        {filteredUsers.length === 0 && (
-          <Box sx={{ p: 4, textAlign: "center" }}>
-            <Typography variant="h6" color="textSecondary">
-              No users found
-            </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-              {searchTerm || roleFilter !== "all"
-                ? "Try adjusting your search or filters"
-                : "No users in the system"}
-            </Typography>
-          </Box>
-        )}
       </TableContainer>
 
       {/* Role Change Confirmation Dialog */}

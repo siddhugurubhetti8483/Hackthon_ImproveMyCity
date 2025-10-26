@@ -45,53 +45,20 @@ const AuditLogs = () => {
     }
   }, [user]);
 
+  // Fetch audit logs from API
   const fetchAuditLogs = async (filterParams = {}) => {
     try {
       setLoading(true);
       setError("");
 
-      // For now, create mock data since backend might not be ready
-      const mockAuditLogs = [
-        {
-          id: 1,
-          userName: "System Administrator",
-          actionType: "Login",
-          entity: "User",
-          entityId: 1,
-          description: "User logged in successfully",
-          ipAddress: "192.168.1.1",
-          timestamp: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          userName: "John Doe",
-          actionType: "CreateComplaint",
-          entity: "Complaint",
-          entityId: 101,
-          description: "Created complaint: Pothole on Main Street",
-          ipAddress: "192.168.1.2",
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: 3,
-          userName: "City Officer",
-          actionType: "UpdateComplaintStatus",
-          entity: "Complaint",
-          entityId: 101,
-          description: "Updated complaint status from Pending to InProgress",
-          ipAddress: "192.168.1.3",
-          timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-        },
-      ];
-
-      setAuditLogs(mockAuditLogs);
-
-      // Uncomment when backend is ready:
-      // const response = await auditService.getAuditLogs(filterParams);
-      // if (response.success) {
-      //   setAuditLogs(response.data);
-      // }
+      const response = await auditService.getAuditLogs(filterParams);
+      if (response.success) {
+        setAuditLogs(response.data);
+      } else {
+        setError(response.message || "Failed to load audit logs");
+      }
     } catch (error) {
+      console.error("Fetch audit logs error:", error);
       setError(error.message || "Failed to load audit logs");
     } finally {
       setLoading(false);

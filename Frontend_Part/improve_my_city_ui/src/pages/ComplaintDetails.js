@@ -27,10 +27,12 @@ import {
   Delete as DeleteIcon,
   Comment as CommentIcon,
   Assignment as AssignmentIcon,
+  PersonAdd as PersonAddIcon,
 } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { complaintService } from "../services/complaintService";
+import { userService } from "../services/userService";
 
 const ComplaintDetails = () => {
   const { id } = useParams();
@@ -42,6 +44,10 @@ const ComplaintDetails = () => {
   const [comment, setComment] = useState("");
   const [addingComment, setAddingComment] = useState(false);
   const [updateDialog, setUpdateDialog] = useState(false);
+  const [assignDialog, setAssignDialog] = useState(false);
+  const [officers, setOfficers] = useState([]);
+  const [selectedOfficer, setSelectedOfficer] = useState("");
+  const [assigning, setAssigning] = useState(false);
   const [statusUpdate, setStatusUpdate] = useState({
     status: "",
     resolutionNotes: "",
@@ -49,7 +55,22 @@ const ComplaintDetails = () => {
 
   useEffect(() => {
     fetchComplaintDetails();
-  }, [id]);
+    if (user?.roles?.includes("Admin")) {
+      fetchOfficers();
+    }
+  }, [id, user]);
+
+  // FIXED: Use userService.getOfficers() instead
+  const fetchOfficers = async () => {
+    try {
+      const response = await userService.getOfficers();
+      if (response.success) {
+        setOfficers(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch officers:", error);
+    }
+  };
 
   const fetchComplaintDetails = async () => {
     try {
@@ -67,6 +88,34 @@ const ComplaintDetails = () => {
     }
   };
 
+  // FIXED: Proper assignment function
+  const handleAssignComplaint = async () => {
+    if (!selectedOfficer) {
+      setError("Please select an officer");
+      return;
+    }
+
+    setAssigning(true);
+    try {
+      const response = await complaintService.assignComplaint(id, {
+        officerId: selectedOfficer,
+      });
+
+      if (response.success) {
+        setAssignDialog(false);
+        setSelectedOfficer("");
+        fetchComplaintDetails();
+        setError("");
+      } else {
+        setError(response.message || "Failed to assign complaint");
+      }
+    } catch (error) {
+      setError(error.message || "Failed to assign complaint");
+    } finally {
+      setAssigning(false);
+    }
+  };
+
   const handleAddComment = async () => {
     if (!comment.trim()) return;
 
@@ -75,7 +124,7 @@ const ComplaintDetails = () => {
       const response = await complaintService.addComment(id, { comment });
       if (response.success) {
         setComment("");
-        fetchComplaintDetails(); // Refresh comments
+        fetchComplaintDetails();
       }
     } catch (error) {
       setError(error.message || "Failed to add comment");
@@ -158,6 +207,7 @@ const ComplaintDetails = () => {
     complaint.createdBy.userId === user?.userId;
   const canUpdateStatus =
     user?.roles?.includes("Admin") || user?.roles?.includes("Officer");
+  const isAdmin = user?.roles?.includes("Admin");
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -185,6 +235,18 @@ const ComplaintDetails = () => {
         </Box>
 
         <Box display="flex" gap={1}>
+          {/* Assign Button for Admin */}
+          {isAdmin && !complaint.assignedTo && (
+            <Button
+              variant="contained"
+              // startIcon={<PersonAddIcon />}
+              onClick={() => setAssignDialog(true)}
+              color="secondary"
+            >
+              Assign Officer
+            </Button>
+          )}
+
           {canUpdateStatus && (
             <Button
               variant="outlined"
@@ -386,6 +448,18 @@ const ComplaintDetails = () => {
                     {complaint.assignedTo.email}
                   </Typography>
                 )}
+
+                {/* Show assign button if not assigned and admin */}
+                {isAdmin && !complaint.assignedTo && (
+                  <Button
+                    size="small"
+                    startIcon={<PersonAddIcon />}
+                    onClick={() => setAssignDialog(true)}
+                    sx={{ mt: 1 }}
+                  >
+                    Assign Officer
+                  </Button>
+                )}
               </Box>
 
               <Divider sx={{ my: 2 }} />
@@ -468,6 +542,59 @@ const ComplaintDetails = () => {
             disabled={!statusUpdate.status}
           >
             Update Status
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Assign Officer Dialog */}
+      <Dialog
+        open={assignDialog}
+        onClose={() => setAssignDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Assign Complaint to Officer</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Select an officer to assign this complaint:{" "}
+            <strong>
+              #{complaint.id} - {complaint.title}
+            </strong>
+          </Typography>
+
+          <TextField
+            select
+            fullWidth
+            label="Select Officer"
+            value={selectedOfficer}
+            onChange={(e) => setSelectedOfficer(e.target.value)}
+            sx={{ mt: 2 }}
+          >
+            <MenuItem value="">Choose an officer...</MenuItem>
+            {officers.map((officer) => (
+              <MenuItem key={officer.userId} value={officer.userId}>
+                {officer.fullName} - {officer.email}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          {officers.length === 0 && (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              No officers available. Please create officer accounts first.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAssignDialog(false)}>Cancel</Button>
+          <Button
+            onClick={handleAssignComplaint}
+            variant="contained"
+            disabled={!selectedOfficer || assigning || officers.length === 0}
+            startIcon={
+              assigning ? <CircularProgress size={20} /> : <PersonAddIcon />
+            }
+          >
+            {assigning ? "Assigning..." : "Assign Complaint"}
           </Button>
         </DialogActions>
       </Dialog>

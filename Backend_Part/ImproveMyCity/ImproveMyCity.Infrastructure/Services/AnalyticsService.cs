@@ -95,17 +95,31 @@ namespace ImproveMyCity.Infrastructure.Services
             {
                 var startDate = DateTime.UtcNow.AddMonths(-months);
 
-                var monthlyStats = await _dbContext.Complaints
+                // APPROACH 1: Client-side processing (Most Reliable)
+                var monthlyData = await _dbContext.Complaints
                     .Where(c => !c.IsDeleted && c.CreatedAt >= startDate)
-                    .GroupBy(c => new { Year = c.CreatedAt.Year, Month = c.CreatedAt.Month })
-                    .Select(g => new MonthlyStatsDTO
+                    .GroupBy(c => new {
+                        Year = c.CreatedAt.Year,
+                        Month = c.CreatedAt.Month
+                    })
+                    .Select(g => new
                     {
-                        Month = $"{g.Key.Year}-{g.Key.Month:00}",
+                        Year = g.Key.Year,
+                        Month = g.Key.Month,
                         Complaints = g.Count(),
                         Resolved = g.Count(c => c.Status == "Resolved")
                     })
-                    .OrderBy(ms => ms.Month)
+                    .OrderBy(x => x.Year)
+                    .ThenBy(x => x.Month)
                     .ToListAsync();
+
+                // Format month string on client side
+                var monthlyStats = monthlyData.Select(x => new MonthlyStatsDTO
+                {
+                    Month = $"{x.Year}-{x.Month:00}",
+                    Complaints = x.Complaints,
+                    Resolved = x.Resolved
+                }).ToList();
 
                 return monthlyStats;
             }
@@ -115,5 +129,6 @@ namespace ImproveMyCity.Infrastructure.Services
                 throw;
             }
         }
+
     }
 }

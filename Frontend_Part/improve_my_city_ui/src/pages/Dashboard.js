@@ -1,295 +1,3 @@
-// import React, { useState, useEffect } from "react";
-// import {
-//   Container,
-//   Grid,
-//   Card,
-//   CardContent,
-//   Typography,
-//   Button,
-//   Box,
-//   Alert,
-//   CircularProgress,
-//   Paper,
-// } from "@mui/material";
-// import {
-//   Add as AddIcon,
-//   Warning as WarningIcon,
-//   Build as BuildIcon,
-//   CheckCircle as CheckCircleIcon,
-//   List as ListIcon,
-//   People as PeopleIcon,
-//   Analytics as AnalyticsIcon,
-//   Assignment as AssignmentIcon,
-// } from "@mui/icons-material";
-// import { useAuth } from "../context/AuthContext";
-// import { useNavigate } from "react-router-dom";
-// import { complaintService } from "../services/complaintService";
-// // import { analyticsService } from "../services/analyticsService";
-
-// const Dashboard = () => {
-//   const { user } = useAuth();
-//   const navigate = useNavigate();
-
-//   const [stats, setStats] = useState({
-//     total: 0,
-//     pending: 0,
-//     inProgress: 0,
-//     resolved: 0,
-//     myAssigned: 0,
-//     myResolved: 0,
-//   });
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState("");
-
-//   useEffect(() => {
-//     fetchComplaintStats();
-//   }, [user]);
-
-//   // ✅ Fetch complaints and compute stats (with Officer-specific logic)
-//   const fetchComplaintStats = async () => {
-//     try {
-//       setLoading(true);
-//       const response = await complaintService.getComplaints();
-
-//       if (response.success) {
-//         const complaints = response.data;
-
-//         // Default stats (Admin/User)
-//         let statsData = {
-//           total: complaints.length,
-//           pending: complaints.filter((c) => c.status === "Pending").length,
-//           inProgress: complaints.filter((c) => c.status === "InProgress")
-//             .length,
-//           resolved: complaints.filter((c) => c.status === "Resolved").length,
-//         };
-
-//         // 👮 Officer ke liye filtered stats
-//         if (user?.roles?.includes("Officer")) {
-//           const myAssigned = complaints.filter(
-//             (c) => c.assignedTo?.userId === user.userId
-//           );
-
-//           statsData = {
-//             total: myAssigned.length,
-//             pending: myAssigned.filter((c) => c.status === "Pending").length,
-//             inProgress: myAssigned.filter((c) => c.status === "InProgress")
-//               .length,
-//             resolved: myAssigned.filter((c) => c.status === "Resolved").length,
-//           };
-//         }
-
-//         setStats(statsData);
-//       } else {
-//         setError("Failed to fetch complaints");
-//       }
-//     } catch (error) {
-//       setError(error.message || "Failed to load dashboard data");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   // ✅ Reusable Card Component
-//   const StatCard = ({ title, value, icon, color }) => (
-//     <Card sx={{ height: "100%" }}>
-//       <CardContent>
-//         <Box
-//           sx={{
-//             display: "flex",
-//             alignItems: "center",
-//             justifyContent: "space-between",
-//           }}
-//         >
-//           <Box>
-//             <Typography color="textSecondary" gutterBottom variant="overline">
-//               {title}
-//             </Typography>
-//             <Typography variant="h4" component="div" color={color}>
-//               {value}
-//             </Typography>
-//           </Box>
-//           <Box sx={{ color: color }}>{icon}</Box>
-//         </Box>
-//       </CardContent>
-//     </Card>
-//   );
-
-//   // ✅ Loading State
-//   if (loading) {
-//     return (
-//       <Container>
-//         <Box
-//           display="flex"
-//           justifyContent="center"
-//           alignItems="center"
-//           minHeight="60vh"
-//         >
-//           <CircularProgress />
-//         </Box>
-//       </Container>
-//     );
-//   }
-
-//   // ✅ Main Dashboard Render
-//   return (
-//     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-//       <Typography variant="h4" gutterBottom>
-//         Welcome back, {user?.fullName}!
-//       </Typography>
-//       {error && (
-//         <Alert severity="error" sx={{ mb: 3 }}>
-//           {error}
-//         </Alert>
-//       )}
-//       {/* Role-based Header */}
-//       <Paper sx={{ p: 3, mb: 4, bgcolor: "primary.main", color: "white" }}>
-//         <Typography variant="h6">
-//           {user?.roles?.includes("Admin") &&
-//             "Administrator Dashboard - Manage all city complaints"}
-//           {user?.roles?.includes("Officer") &&
-//             "Officer Dashboard - View and manage your assigned complaints"}
-//           {user?.roles?.includes("User") &&
-//             "Citizen Dashboard - Track your reported issues"}
-//         </Typography>
-//       </Paper>
-//       {/* ✅ Quick Stats Section */}
-//       <Grid container spacing={3} sx={{ mb: 4 }}>
-//         <Grid item xs={12} sm={6} md={3}>
-//           <StatCard
-//             title="Total Complaints"
-//             value={stats.total}
-//             icon={<ListIcon sx={{ fontSize: 40 }} />}
-//             color="primary.main"
-//           />
-//         </Grid>
-//         <Grid item xs={12} sm={6} md={3}>
-//           <StatCard
-//             title="Pending"
-//             value={stats.pending}
-//             icon={<WarningIcon sx={{ fontSize: 40 }} />}
-//             color="warning.main"
-//           />
-//         </Grid>
-//         <Grid item xs={12} sm={6} md={3}>
-//           <StatCard
-//             title="In Progress"
-//             value={stats.inProgress}
-//             icon={<BuildIcon sx={{ fontSize: 40 }} />}
-//             color="info.main"
-//           />
-//         </Grid>
-//         <Grid item xs={12} sm={6} md={3}>
-//           <StatCard
-//             title="Resolved"
-//             value={stats.resolved}
-//             icon={<CheckCircleIcon sx={{ fontSize: 40 }} />}
-//             color="success.main"
-//           />
-//         </Grid>
-//       </Grid>
-//       {/* ✅ Quick Actions Section */}
-//       <Grid container spacing={3}>
-//         <Grid item xs={12} md={6}>
-//           <Card sx={{ p: 3, textAlign: "center" }}>
-//             <CardContent>
-//               <AddIcon sx={{ fontSize: 48, color: "primary.main", mb: 2 }} />
-//               <Typography variant="h6" gutterBottom>
-//                 Report New Issue
-//               </Typography>
-//               <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-//                 Found a problem in your area? Report it quickly and help improve
-//                 your city.
-//               </Typography>
-//               <Button
-//                 variant="contained"
-//                 size="large"
-//                 startIcon={<AddIcon />}
-//                 onClick={() => navigate("/complaints/new")}
-//               >
-//                 Report Issue
-//               </Button>
-//             </CardContent>
-//           </Card>
-//         </Grid>
-
-//         <Grid item xs={12} md={6}>
-//           <Card sx={{ p: 3, textAlign: "center" }}>
-//             <CardContent>
-//               <ListIcon sx={{ fontSize: 48, color: "secondary.main", mb: 2 }} />
-//               <Typography variant="h6" gutterBottom>
-//                 View All Complaints
-//               </Typography>
-//               <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-//                 Track the status of all reported issues and stay updated on
-//                 progress.
-//               </Typography>
-//               <Button
-//                 variant="outlined"
-//                 size="large"
-//                 startIcon={<ListIcon />}
-//                 onClick={() => navigate("/complaints")}
-//               >
-//                 View Complaints
-//               </Button>
-//             </CardContent>
-//           </Card>
-//         </Grid>
-//       </Grid>
-//       {/* ✅ Admin Tools Section */}
-//       {user?.roles?.includes("Admin") && (
-//         <Box sx={{ mt: 4 }}>
-//           <Typography variant="h5" gutterBottom>
-//             Admin Tools
-//           </Typography>
-//           <Grid container spacing={2}>
-//             <Grid item>
-//               <Button variant="outlined" onClick={() => navigate("/users")}>
-//                 User Management
-//               </Button>
-//             </Grid>
-//             <Grid item>
-//               <Button variant="outlined" onClick={() => navigate("/analytics")}>
-//                 Analytics
-//               </Button>
-//             </Grid>
-//             <Grid item>
-//               <Button variant="outlined" onClick={() => navigate("/audit")}>
-//                 Audit Logs
-//               </Button>
-//             </Grid>
-//           </Grid>
-//         </Box>
-//       )}
-//       {/* // Dashboard component ke last mein yeh add karo: */}
-//       {/* Officer-specific additional sections */}
-//       {user?.roles?.includes("Officer") && (
-//         <Box sx={{ mt: 4 }}>
-//           <Typography variant="h5" gutterBottom>
-//             Officer Tools
-//           </Typography>
-//           <Grid container spacing={2}>
-//             <Grid item>
-//               <Button
-//                 variant="outlined"
-//                 onClick={() => navigate("/complaints")}
-//               >
-//                 Manage Complaints
-//               </Button>
-//             </Grid>
-//             <Grid item>
-//               <Button variant="outlined" onClick={() => navigate("/analytics")}>
-//                 View Analytics
-//               </Button>
-//             </Grid>
-//           </Grid>
-//         </Box>
-//       )}
-//     </Container>
-//   );
-// };
-
-// export default Dashboard;
-
 import React, { useState, useEffect } from "react";
 import {
   Container,
@@ -297,7 +5,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Button,
   Box,
   Alert,
   CircularProgress,
@@ -317,10 +24,14 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { complaintService } from "../services/complaintService";
+import AppButton from "../components/common/AppButton";
+import useResponsive from "../hooks/useResponsive";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isMobile, isTablet } = useResponsive();
+
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -397,22 +108,40 @@ const Dashboard = () => {
   };
 
   const StatCard = ({ title, value, icon, color, subtitle }) => (
-    <Card sx={{ height: "100%" }}>
-      <CardContent sx={{ textAlign: "center" }}>
-        <Box sx={{ color, mb: 1, fontSize: "2.5rem" }}>{icon}</Box>
+    <Card
+      sx={{
+        height: "100%",
+        transition: "all 0.3s ease",
+        cursor: "pointer",
+        "&:hover": {
+          transform: "translateY(-4px)",
+          boxShadow: 3,
+        },
+      }}
+      onClick={() => navigate("/complaints")}
+    >
+      <CardContent sx={{ textAlign: "center", p: isMobile ? 2 : 3 }}>
+        <Box sx={{ color, mb: 1, fontSize: isMobile ? "2rem" : "2.5rem" }}>
+          {icon}
+        </Box>
         <Typography
-          variant="h4"
+          variant={isMobile ? "h5" : "h4"}
           component="div"
           color={color}
           fontWeight="bold"
+          gutterBottom
         >
           {value}
         </Typography>
-        <Typography color="textSecondary" gutterBottom variant="h6">
+        <Typography
+          color="textSecondary"
+          variant={isMobile ? "body2" : "h6"}
+          sx={{ fontWeight: 500 }}
+        >
           {title}
         </Typography>
         {subtitle && (
-          <Typography variant="body2" color="textSecondary">
+          <Typography variant="caption" color="textSecondary">
             {subtitle}
           </Typography>
         )}
@@ -429,36 +158,71 @@ const Dashboard = () => {
           alignItems="center"
           minHeight="60vh"
         >
-          <CircularProgress />
+          <CircularProgress size={60} />
         </Box>
       </Container>
     );
   }
 
+  const gridSpacing = isMobile ? 1 : 2;
+  const statCardSize = isMobile ? 6 : 4;
+
   return (
     <Container maxWidth="lg" sx={{ mt: 2, mb: 2 }}>
-      <Typography variant="h4" gutterBottom fontWeight="bold">
-        Welcome, {user?.fullName}!
+      <Typography variant="h4" gutterBottom fontWeight="bold" sx={{ mb: 1 }}>
+        Welcome back, {user?.fullName}!
       </Typography>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={
+            <AppButton
+              size="small"
+              onClick={fetchDashboardData}
+              variant="outlined"
+            >
+              Retry
+            </AppButton>
+          }
+        >
           {error}
         </Alert>
       )}
 
       {/* Role-based greeting */}
-      <Paper sx={{ p: 2, mb: 3, bgcolor: "primary.main", color: "white" }}>
-        <Typography variant="h6">
-          {user?.roles?.includes("Admin") && "Administrator Dashboard"}
-          {user?.roles?.includes("Officer") && "Officer Dashboard"}
-          {user?.roles?.includes("User") && "Citizen Dashboard"}
+      <Paper
+        sx={{
+          p: 3,
+          mb: 3,
+          bgcolor: "primary.main",
+          color: "white",
+          borderRadius: 3,
+          background: "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
+        }}
+      >
+        <Typography variant="h6" fontWeight="600">
+          {user?.roles?.includes("Admin") &&
+            "Administrator Dashboard - Manage all city complaints"}
+          {user?.roles?.includes("Officer") &&
+            "Officer Dashboard - View and manage assigned complaints"}
+          {user?.roles?.includes("User") &&
+            "Citizen Dashboard - Track your reported issues"}
+        </Typography>
+        <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
+          {user?.roles?.includes("Admin") &&
+            "You have full access to manage users, complaints, and system analytics."}
+          {user?.roles?.includes("Officer") &&
+            "You can view assigned complaints, update their status, and access analytics."}
+          {user?.roles?.includes("User") &&
+            "You can report new issues and track the progress of your complaints."}
         </Typography>
       </Paper>
 
       {/* Quick Stats */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={6} sm={4} md={2}>
+      <Grid container spacing={gridSpacing} sx={{ mb: 4 }}>
+        <Grid item xs={statCardSize} sm={4} md={2}>
           <StatCard
             title="Total"
             value={stats.total}
@@ -467,7 +231,7 @@ const Dashboard = () => {
           />
         </Grid>
 
-        <Grid item xs={6} sm={4} md={2}>
+        <Grid item xs={statCardSize} sm={4} md={2}>
           <StatCard
             title="Pending"
             value={stats.pending}
@@ -476,7 +240,7 @@ const Dashboard = () => {
           />
         </Grid>
 
-        <Grid item xs={6} sm={4} md={2}>
+        <Grid item xs={statCardSize} sm={4} md={2}>
           <StatCard
             title="In Progress"
             value={stats.inProgress}
@@ -485,7 +249,7 @@ const Dashboard = () => {
           />
         </Grid>
 
-        <Grid item xs={6} sm={4} md={2}>
+        <Grid item xs={statCardSize} sm={4} md={2}>
           <StatCard
             title="Resolved"
             value={stats.resolved}
@@ -497,7 +261,7 @@ const Dashboard = () => {
         {/* Officer Specific Stats */}
         {user?.roles?.includes("Officer") && (
           <>
-            <Grid item xs={6} sm={4} md={2}>
+            <Grid item xs={statCardSize} sm={4} md={2}>
               <StatCard
                 title="My Assigned"
                 value={stats.myAssigned}
@@ -505,7 +269,7 @@ const Dashboard = () => {
                 color="#9c27b0"
               />
             </Grid>
-            <Grid item xs={6} sm={4} md={2}>
+            <Grid item xs={statCardSize} sm={4} md={2}>
               <StatCard
                 title="My Resolved"
                 value={stats.myResolved}
@@ -517,132 +281,166 @@ const Dashboard = () => {
         )}
       </Grid>
 
-      {/* Quick Actions - Single Row */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      {/* Quick Actions */}
+      <Grid container spacing={isMobile ? 2 : 3} sx={{ mb: 4 }}>
         {/* Report Issue - For ALL ROLES including Officer */}
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ textAlign: "center", p: 2 }}>
+          <Card sx={{ textAlign: "center", p: 3, height: "100%" }}>
             <CardContent>
-              <AddIcon sx={{ fontSize: 40, color: "primary.main", mb: 1 }} />
-              <Typography variant="h6" gutterBottom>
-                Report Issue
+              <AddIcon sx={{ fontSize: 48, color: "primary.main", mb: 2 }} />
+              <Typography variant="h6" gutterBottom fontWeight="600">
+                Report New Issue
               </Typography>
-              <Button
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                Found a problem in your area? Report it quickly and help improve
+                your city.
+              </Typography>
+              <AppButton
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => navigate("/complaints/new")}
                 fullWidth
+                size={isMobile ? "medium" : "large"}
               >
-                New Complaint
-              </Button>
+                {isMobile ? "Report Issue" : "Report New Issue"}
+              </AppButton>
             </CardContent>
           </Card>
         </Grid>
 
         {/* View Complaints */}
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ textAlign: "center", p: 2 }}>
+          <Card sx={{ textAlign: "center", p: 3, height: "100%" }}>
             <CardContent>
-              <ListIcon sx={{ fontSize: 40, color: "secondary.main", mb: 1 }} />
-              <Typography variant="h6" gutterBottom>
+              <ListIcon sx={{ fontSize: 48, color: "secondary.main", mb: 2 }} />
+              <Typography variant="h6" gutterBottom fontWeight="600">
                 View Complaints
               </Typography>
-              <Button
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                Track the status of all reported issues and stay updated on
+                progress.
+              </Typography>
+              <AppButton
                 variant="contained"
                 color="secondary"
                 startIcon={<ListIcon />}
                 onClick={() => navigate("/complaints")}
                 fullWidth
+                size={isMobile ? "medium" : "large"}
               >
-                Manage
-              </Button>
+                {isMobile ? "View All" : "View All Complaints"}
+              </AppButton>
             </CardContent>
           </Card>
         </Grid>
 
         {/* Analytics */}
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ textAlign: "center", p: 2 }}>
-            <CardContent>
-              <AnalyticsIcon sx={{ fontSize: 40, color: "info.main", mb: 1 }} />
-              <Typography variant="h6" gutterBottom>
-                Analytics
-              </Typography>
-              <Button
-                variant="contained"
-                color="info"
-                startIcon={<AnalyticsIcon />}
-                onClick={() => navigate("/analytics")}
-                fullWidth
-              >
-                View Stats
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
+        {(user?.roles?.includes("Admin") ||
+          user?.roles?.includes("Officer")) && (
+          <Grid item xs={12} sm={6} md={4}>
+            <Card sx={{ textAlign: "center", p: 3, height: "100%" }}>
+              <CardContent>
+                <AnalyticsIcon
+                  sx={{ fontSize: 48, color: "info.main", mb: 2 }}
+                />
+                <Typography variant="h6" gutterBottom fontWeight="600">
+                  View Analytics
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                  sx={{ mb: 3 }}
+                >
+                  Get insights and statistics about complaints and system usage.
+                </Typography>
+                <AppButton
+                  variant="contained"
+                  color="info"
+                  startIcon={<AnalyticsIcon />}
+                  onClick={() => navigate("/analytics")}
+                  fullWidth
+                  size={isMobile ? "medium" : "large"}
+                >
+                  {isMobile ? "Analytics" : "View Analytics"}
+                </AppButton>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
 
-      {/* Admin Tools - Compact */}
+      {/* Admin Tools */}
       {user?.roles?.includes("Admin") && (
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Typography variant="h6" gutterBottom>
+        <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+          <Typography variant="h5" gutterBottom fontWeight="600" sx={{ mb: 2 }}>
             Admin Tools
           </Typography>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-            <Button
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <AppButton
               variant="outlined"
-              size="small"
+              size="large"
               onClick={() => navigate("/users")}
               startIcon={<PeopleIcon />}
             >
-              Users
-            </Button>
-            <Button
+              User Management
+            </AppButton>
+            <AppButton
               variant="outlined"
-              size="small"
+              size="large"
               onClick={() => navigate("/analytics")}
               startIcon={<AnalyticsIcon />}
             >
-              Analytics
-            </Button>
-            <Button
+              Analytics Dashboard
+            </AppButton>
+            <AppButton
               variant="outlined"
-              size="small"
+              size="large"
               onClick={() => navigate("/audit")}
               startIcon={<HistoryIcon />}
             >
-              Audit
-            </Button>
+              Audit Logs
+            </AppButton>
           </Box>
         </Paper>
       )}
 
-      {/* Officer Tools - Compact */}
+      {/* Officer Tools */}
       {user?.roles?.includes("Officer") && (
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Typography variant="h6" gutterBottom>
+        <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+          <Typography variant="h5" gutterBottom fontWeight="600" sx={{ mb: 2 }}>
             Officer Tools
           </Typography>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-            <Button
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <AppButton
               variant="outlined"
-              size="small"
+              size="large"
               onClick={() => navigate("/complaints")}
               startIcon={<AssignmentIcon />}
             >
-              Complaints
-            </Button>
-            <Button
+              Manage Complaints
+            </AppButton>
+            <AppButton
               variant="outlined"
-              size="small"
+              size="large"
               onClick={() => navigate("/analytics")}
               startIcon={<AnalyticsIcon />}
             >
-              Analytics
-            </Button>
+              View Analytics
+            </AppButton>
           </Box>
         </Paper>
       )}
+
+      {/* Refresh Button */}
+      <Box sx={{ textAlign: "center", mt: 4 }}>
+        <AppButton
+          variant="text"
+          onClick={fetchDashboardData}
+          loading={loading}
+        >
+          Refresh Data
+        </AppButton>
+      </Box>
     </Container>
   );
 };

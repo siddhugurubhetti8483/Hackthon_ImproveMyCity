@@ -1,6 +1,10 @@
 import api from "./api";
 
 export const auditService = {
+  /**
+   * Get audit logs with optional filters
+   * @param {Object} filters - Filter options: userId, actionType, fromDate, toDate
+   */
   getAuditLogs: async (filters = {}) => {
     try {
       const params = new URLSearchParams();
@@ -10,7 +14,8 @@ export const auditService = {
       if (filters.fromDate) params.append("fromDate", filters.fromDate);
       if (filters.toDate) params.append("toDate", filters.toDate);
 
-      const response = await api.get(`/audit?${params.toString()}`);
+      // Matches ASP.NET Core route (Controller: AuditController)
+      const response = await api.get(`/Audit?${params.toString()}`);
       return response.data;
     } catch (error) {
       console.error("Audit service error:", error);

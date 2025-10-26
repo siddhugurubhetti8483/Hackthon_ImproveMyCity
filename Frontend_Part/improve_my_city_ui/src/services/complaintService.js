@@ -59,4 +59,16 @@ export const complaintService = {
     const response = await api.get(`/complaints/${id}/comments`);
     return response.data;
   },
+
+  // ADDED: Get available officers for assignment
+  getAvailableOfficers: async () => {
+    try {
+      // Use userService to get officers list
+      const response = await api.get("/Users/Admin,Officer");
+      return response.data;
+    } catch (error) {
+      console.error("Get available officers error:", error);
+      throw error;
+    }
+  },
 };

@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_BASE_URL = "https://localhost:7230/api";
 
-// Axios instance create karo
+// Create Axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -10,7 +10,7 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - JWT token automatically add karo
+// Request interceptor - Add JWT token automatically
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("authToken");
@@ -19,17 +19,14 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor - 403 errors handle karo
+// Response interceptor - Handle errors globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 403) {
-      // 403 error - show proper message
       const errorMessage =
         error.response?.data?.message ||
         "Access denied. You do not have permission to perform this action.";
@@ -42,7 +39,11 @@ api.interceptors.response.use(
       window.location.href = "/login";
     }
 
-    return Promise.reject(error);
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+
+    throw error;
   }
 );
 

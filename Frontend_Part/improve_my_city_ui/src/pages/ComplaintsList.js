@@ -22,6 +22,10 @@ import {
   Card,
   CardContent,
   Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -30,10 +34,12 @@ import {
   Delete as DeleteIcon,
   Assignment as AssignmentIcon,
   Refresh as RefreshIcon,
+  PersonAdd as PersonAddIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { complaintService } from "../services/complaintService";
+import { userService } from "../services/userService"; // ADDED IMPORT
 
 const ComplaintsList = () => {
   const { user } = useAuth();
@@ -45,6 +51,10 @@ const ComplaintsList = () => {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [tabValue, setTabValue] = useState(0);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedComplaintId, setSelectedComplaintId] = useState(null);
+  const [availableOfficers, setAvailableOfficers] = useState([]);
+  const [selectedOfficer, setSelectedOfficer] = useState("");
 
   useEffect(() => {
     fetchComplaints();
@@ -142,6 +152,46 @@ const ComplaintsList = () => {
       if (response.success) {
         // Refresh complaints
         await fetchComplaints();
+      }
+    } catch (error) {
+      setError(error.message || "Failed to assign complaint");
+    }
+  };
+
+  // Use userService.getOfficers() instead
+  const handleAssignComplaint = async (complaintId) => {
+    try {
+      const officersResponse = await userService.getOfficers();
+      if (officersResponse.success) {
+        setAvailableOfficers(officersResponse.data);
+        setSelectedComplaintId(complaintId);
+        setAssignDialogOpen(true);
+      } else {
+        setError("Failed to load available officers");
+      }
+    } catch (error) {
+      setError(error.message || "Failed to load officers");
+    }
+  };
+
+  const confirmAssignment = async () => {
+    if (!selectedOfficer) {
+      setError("Please select an officer");
+      return;
+    }
+
+    try {
+      const response = await complaintService.assignComplaint(
+        selectedComplaintId,
+        { officerId: selectedOfficer }
+      );
+      if (response.success) {
+        setAssignDialogOpen(false);
+        setSelectedOfficer("");
+        setSelectedComplaintId(null);
+        await fetchComplaints();
+      } else {
+        setError(response.message || "Failed to assign complaint");
       }
     } catch (error) {
       setError(error.message || "Failed to assign complaint");
@@ -454,6 +504,20 @@ const ComplaintsList = () => {
                         </IconButton>
                       )}
 
+                    {/* Admin can assign unassigned complaints */}
+                    {user?.roles?.includes("Admin") &&
+                      !complaint.assignedTo &&
+                      complaint.status === "Pending" && (
+                        <IconButton
+                          size="small"
+                          color="success"
+                          onClick={() => handleAssignComplaint(complaint.id)}
+                          title="Assign Officer"
+                        >
+                          {/* <PersonAddIcon /> */}
+                        </IconButton>
+                      )}
+
                     {/* Admin and complaint creator can edit/delete */}
                     {(user?.roles?.includes("Admin") ||
                       complaint.createdBy?.userId === user?.userId) && (
@@ -514,6 +578,43 @@ const ComplaintsList = () => {
           </Box>
         )}
       </TableContainer>
+
+      {/* Assign Officer Dialog */}
+      <Dialog
+        open={assignDialogOpen}
+        onClose={() => setAssignDialogOpen(false)}
+      >
+        <DialogTitle>Assign Complaint to Officer</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Select an officer to assign this complaint:
+          </Typography>
+          <TextField
+            select
+            fullWidth
+            label="Select Officer"
+            value={selectedOfficer}
+            onChange={(e) => setSelectedOfficer(e.target.value)}
+            size="small"
+          >
+            {availableOfficers.map((officer) => (
+              <MenuItem key={officer.userId} value={officer.userId}>
+                {officer.fullName} - {officer.department || "General"}
+              </MenuItem>
+            ))}
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAssignDialogOpen(false)}>Cancel</Button>
+          <Button
+            onClick={confirmAssignment}
+            variant="contained"
+            disabled={!selectedOfficer}
+          >
+            Assign
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
